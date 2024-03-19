@@ -5,17 +5,12 @@ import org.translateToSql.*;
 import org.translateToSql.twoVL.visitors.*;
 import org.translateToSql.utils.Parser;
 
-//import javax.ws.rs.GET;
-//import javax.ws.rs.Path;
-//import javax.ws.rs.core.Response;
-//
 /***
  * A concrete implementation of the abstract TranslateToSql class, designed to perform specific translation tasks on
  * SQL queries (their AST representations), using two-valued logic (2VL). Implements the translation algorithm based on
  * the principles described in the article "Handling SQL Nulls with Two-Valued Logic".
  */
 
-//@Path("/twoVL")
 public class TwoVL extends TranslateToSql {
 
     public TwoVL(){
@@ -33,10 +28,4 @@ public class TwoVL extends TranslateToSql {
         // convert to string
         return Parser.parseAstToString(statement);
     }
-
-//    @GET
-//    public String getTranslation() {
-//        return translation(...);
-//    }
-
 }
