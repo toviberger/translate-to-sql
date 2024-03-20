@@ -19,13 +19,17 @@ public class TwoVL extends TranslateToSql {
 
     @Override
     public String translate(String query){
-        // convert query to AST representation
-        Statement statement = Parser.parseStringToAst(query);
+        try {
+            // convert query to AST representation
+            Statement statement = Parser.parseStringToAst(query);
+            // translate toSQL
+            statement.accept(this.getVisitorManager().getStatementVisitor());
+            // convert to string
+            return Parser.parseAstToString(statement);
+        }
+        catch (Exception e){
+            return "illegal query";
+        }
 
-        // translate toSQL
-        statement.accept(this.getVisitorManager().getStatementVisitor());
-
-        // convert to string
-        return Parser.parseAstToString(statement);
     }
 }

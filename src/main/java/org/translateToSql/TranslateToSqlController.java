@@ -9,7 +9,7 @@ import org.translateToSql.twoVL.TwoVL;
 public class TranslateToSqlController {
 
     @GetMapping("/twoVL")
-    public String index(@RequestParam("query") String query) {
+    public String twoVL(@RequestParam("query") String query) {
         TwoVL algo = new TwoVL();
         return algo.translate(query);
     }

@@ -426,12 +426,39 @@ class TwoVLTests {
         assertEquals(result, "SELECT sum(a) FROM A");
     }
 
+    @Test
+    void test59() {
+        // Action
+        String result = this.twoVL.translate("    SELECT A\n" +
+                "    FROM R\n" +
+                "    WHERE a != ANY(SELECT a FROM R WHERE a!=b)");
+        assertEquals(result, "SELECT A FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM R WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT (a IS NULL OR S.a IS NULL OR NOT a = S.a))");
+    }
+
+
+
 //    @Test
 //    void test58() {
 //        // Action
 //        String result = this.twoVL.translate("SELECT * FROM R WHERE a IN (ARRAY[1,2,3]);");
 //        assertEquals(result, "SELECT * FROM R WHERE a IN (ARRAY[1,2,3]);");
 //    }
+
+    //    @Test
+//    void test58() {
+//        // Action
+//        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT * FROM R WHERE a!=b)");
+//        assertEquals(result, "");
+//    }
+
+    //    @Test
+//    void test58() {
+//        // Action
+//        String result = this.twoVL.translate("SELECT * FROM R WHERE (SELECT * FROM R) != ANY(SELECT * FROM R WHERE a!=b)");
+//        assertEquals(result, "");
+//    }
+
+
 
 
 }
