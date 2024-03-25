@@ -118,12 +118,21 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
             this.trTExpressionVisitor.setParentNode(this.getParentNode());
             inExpression.accept(this.trTExpressionVisitor);
         }
-        // tr_f(t IN (E)) :=  tr_f(t = ANY(E))
         else {
-            Expression newEqualsExpression = new EqualsTo(inExpression.getLeftExpression(),
-                    new AnyComparisonExpression(AnyType.ANY, (Select) inExpression.getRightExpression()));
-            setASTNode(newEqualsExpression);
-            newEqualsExpression.accept(this);
+            // tr_f(t IN (E)) :=  tr_f(t = ANY(E))
+            if (inExpression.getRightExpression() instanceof Select) {
+                Expression newEqualsExpression = new EqualsTo(inExpression.getLeftExpression(),
+                        new AnyComparisonExpression(AnyType.ANY, (Select) inExpression.getRightExpression()));
+                setASTNode(newEqualsExpression);
+                newEqualsExpression.accept(this);
+            }
+            else {
+                inExpression.setNot(true);
+                setParentNode(inExpression, ChildPosition.LEFT);
+                inExpression.getLeftExpression().accept(this);
+                setParentNode(inExpression, ChildPosition.RIGHT);
+                inExpression.getRightExpression().accept(this);
+            }
         }
     }
 
@@ -334,7 +343,14 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      */
     private List<SelectItem<?>> getSelectItemsList(Select select){
         if (select instanceof ParenthesedSelect) return getSelectItemsList(((ParenthesedSelect) select).getSelect());
-        else if (select instanceof PlainSelect) return select.getPlainSelect().getSelectItems();
+        else if (select instanceof PlainSelect){
+            if (select.getPlainSelect().getSelectItems().get(0).getExpression() instanceof AllColumns){
+                // case: SELECT *
+            }
+            else {
+                return select.getPlainSelect().getSelectItems();
+            }
+        }
         else if (select instanceof SetOperationList) return getSelectItemsList(((SetOperationList) select).getSelects().get(0));
 
         return null;
@@ -349,10 +365,12 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         List<SelectItem<?>> selectItemsList = getSelectItemsList(select);
         ParenthesedExpressionList parenthesedSelectItems = new ParenthesedExpressionList();
         for (SelectItem item : selectItemsList) {
-            if (item.getExpression() instanceof Column){
-                parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), ((Column)item.getExpression()).getColumnName()));
+            if (item.getExpression() instanceof Column && item.getAlias() == null) {
+                parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), ((Column) item.getExpression()).getColumnName()));
             }
-            else parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), item.getAlias().getName()));
+            else {
+                parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), item.getAlias().getName()));
+            }
         }
         return parenthesedSelectItems;
     }

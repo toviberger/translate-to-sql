@@ -2,6 +2,7 @@ package org.translateToSql;
 
 import org.translateToSql.twoVL.TwoVL;
 import org.junit.jupiter.api.Test;
+import org.translateToSql.utils.ExpressionUtils;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -98,7 +99,7 @@ class TwoVLTests {
     void test13() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM Employees WHERE ID NOT IN (SELECT EmployeeID FROM Orders WHERE OrderDate > '2023-01-01')");
-        assertEquals(result, "SELECT * FROM Employees WHERE NOT EXISTS (SELECT * FROM (SELECT EmployeeID FROM Orders WHERE OrderDate > '2023-01-01') AS S WHERE NOT (ID IS NULL OR S.EmployeeID IS NULL OR NOT ID = S.EmployeeID))");
+        assertEquals(result, "SELECT * FROM Employees WHERE NOT EXISTS (SELECT * FROM (SELECT EmployeeID FROM Orders WHERE OrderDate > '2023-01-01') AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (ID IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".EmployeeID IS NULL OR NOT ID = " + ExpressionUtils.SUB_QUERY_NAME + ".EmployeeID))");
     }
 
     @Test
@@ -153,7 +154,7 @@ class TwoVLTests {
         // Action
         String result = this.twoVL.translate("SELECT *\n" +
                 "FROM Products WHERE NOT(ProductID > ANY (SELECT R.A FROM R WHERE R.A != S.A OR NOT (R.A=1)));");
-        assertEquals(result,  "SELECT * FROM Products WHERE NOT EXISTS (SELECT * FROM (SELECT R.A FROM R WHERE (R.A IS NULL OR S.A IS NULL OR NOT R.A = S.A) OR (R.A IS NULL OR NOT R.A = 1)) AS S WHERE NOT (ProductID IS NULL OR S.A IS NULL OR NOT ProductID > S.A))");
+        assertEquals(result,  "SELECT * FROM Products WHERE NOT EXISTS (SELECT * FROM (SELECT R.A FROM R WHERE (R.A IS NULL OR S.A IS NULL OR NOT R.A = S.A) OR (R.A IS NULL OR NOT R.A = 1)) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (ProductID IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".A IS NULL OR NOT ProductID > " + ExpressionUtils.SUB_QUERY_NAME + ".A))");
     }
 
     @Test
@@ -182,7 +183,7 @@ class TwoVLTests {
         // Action
         String result = this.twoVL.translate("SELECT R.A FROM R WHERE R.A NOT IN\n" +
                 "( SELECT S.A FROM S )");
-        assertEquals(result, "SELECT R.A FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT S.A FROM S) AS S WHERE NOT (R.A IS NULL OR S.A IS NULL OR NOT R.A = S.A))");
+        assertEquals(result, "SELECT R.A FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT S.A FROM S) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (R.A IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".A IS NULL OR NOT R.A = " + ExpressionUtils.SUB_QUERY_NAME + ".A))");
     }
 
     @Test
@@ -212,7 +213,7 @@ class TwoVLTests {
     void test28() {
         // Action
         String result = this.twoVL.translate("SELECT c_nationkey, COUNT(c_custkey) FROM customer WHERE c_acctbal > (SELECT avg(c_acctbal) FROM customer WHERE c_acctbal > 0.0 AND c_custkey NOT IN (SELECT o_custkey FROM orders)) GROUP BY c_nationkey");
-        assertEquals(result, "SELECT c_nationkey, COUNT(c_custkey) FROM customer WHERE c_acctbal > (SELECT avg(c_acctbal) FROM customer WHERE c_acctbal > 0.0 AND NOT EXISTS (SELECT * FROM (SELECT o_custkey FROM orders) AS S WHERE NOT (c_custkey IS NULL OR S.o_custkey IS NULL OR NOT c_custkey = S.o_custkey))) GROUP BY c_nationkey");
+        assertEquals(result, "SELECT c_nationkey, COUNT(c_custkey) FROM customer WHERE c_acctbal > (SELECT avg(c_acctbal) FROM customer WHERE c_acctbal > 0.0 AND NOT EXISTS (SELECT * FROM (SELECT o_custkey FROM orders) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (c_custkey IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".o_custkey IS NULL OR NOT c_custkey = " + ExpressionUtils.SUB_QUERY_NAME + ".o_custkey))) GROUP BY c_nationkey");
     }
 
     @Test
@@ -240,42 +241,42 @@ class TwoVLTests {
     void test32() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a, b) != ANY (SELECT a, b FROM sub)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a, b FROM sub) AS S WHERE NOT ((a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b)))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a, b FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT ((a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a) AND (b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".b IS NULL OR NOT b = " + ExpressionUtils.SUB_QUERY_NAME + ".b)))");
     }
 
     @Test
     void test33() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a, b) != ALL (SELECT a, b FROM sub)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE EXISTS (SELECT * FROM (SELECT a, b FROM sub) AS S WHERE (a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE EXISTS (SELECT * FROM (SELECT a, b FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE (a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a) AND (b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".b IS NULL OR NOT b = " + ExpressionUtils.SUB_QUERY_NAME + ".b))");
     }
 
     @Test
     void test34() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE a + b != ANY (SELECT a FROM sub)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS S WHERE NOT (a + b IS NULL OR S.a IS NULL OR NOT a + b = S.a))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a + b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a + b = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
     @Test
     void test35() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a + b) != ANY (SELECT a FROM sub)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS S WHERE NOT (a + b IS NULL OR S.a IS NULL OR NOT a + b = S.a))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a + b IS NULL OR "+ ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a + b = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
     @Test
     void test36() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a + b != ANY (SELECT a FROM sub))");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS S WHERE NOT (a + b IS NULL OR S.a IS NULL OR NOT a + b = S.a))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a + b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a + b = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
     @Test
     void test37() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM Table1 WHERE Column NOT IN (SELECT Column FROM Subquery1 INTERSECT SELECT c FROM Subquery2)");
-        assertEquals(result, "SELECT * FROM Table1 WHERE NOT EXISTS (SELECT * FROM (SELECT Column FROM Subquery1 INTERSECT SELECT c FROM Subquery2) AS S WHERE NOT (Column IS NULL OR S.Column IS NULL OR NOT Column = S.Column))");
+        assertEquals(result, "SELECT * FROM Table1 WHERE NOT EXISTS (SELECT * FROM (SELECT Column FROM Subquery1 INTERSECT SELECT c FROM Subquery2) AS " + ExpressionUtils.SUB_QUERY_NAME +" WHERE NOT (Column IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".Column IS NULL OR NOT Column = " + ExpressionUtils.SUB_QUERY_NAME + ".Column))");
 
     }
 
@@ -290,28 +291,28 @@ class TwoVLTests {
     void test39() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a, b) != ALL (SELECT a, b FROM sub WHERE a != b INTERSECT SELECT a, b FROM sub WHERE a != b)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE EXISTS (SELECT * FROM (SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b) INTERSECT SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE (a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE EXISTS (SELECT * FROM (SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b) INTERSECT SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE (a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a) AND (b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".b IS NULL OR NOT b = " + ExpressionUtils.SUB_QUERY_NAME + ".b))");
     }
 
     @Test
     void test40() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE (a, b) != ANY (SELECT a, b FROM sub WHERE a != b INTERSECT SELECT a, b FROM sub WHERE a != b)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b) INTERSECT SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT ((a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b)))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b) INTERSECT SELECT a, b FROM sub WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT ((a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a) AND (b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".b IS NULL OR NOT b = " + ExpressionUtils.SUB_QUERY_NAME + ".b)))");
     }
 
     @Test
     void test41() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE a != ANY(SELECT sum(a) as a from sub)");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT sum(a) AS a FROM sub) AS S WHERE NOT (a IS NULL OR S.a IS NULL OR NOT a = S.a))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT sum(a) AS a FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
     @Test
     void test42() {
         // Action
         String result = this.twoVL.translate("SELECT * FROM MainTable WHERE ANY (SELECT a FROM sub) != a + b");
-        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS S WHERE NOT (a + b IS NULL OR S.a IS NULL OR NOT a + b = S.a))");
+        assertEquals(result, "SELECT * FROM MainTable WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM sub) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a + b IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a + b = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
     @Test
@@ -339,7 +340,7 @@ class TwoVLTests {
     void test46() {
         // Action
         String result = this.twoVL.translate("SELECT DISTINCT R.A FROM R WHERE ALL (SELECT B FROM R) != R.A");
-        assertEquals(result, "SELECT DISTINCT R.A FROM R WHERE EXISTS (SELECT * FROM (SELECT B FROM R) AS S WHERE (R.A IS NULL OR S.B IS NULL OR NOT R.A = S.B))");
+        assertEquals(result, "SELECT DISTINCT R.A FROM R WHERE EXISTS (SELECT * FROM (SELECT B FROM R) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE (R.A IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".B IS NULL OR NOT R.A = " + ExpressionUtils.SUB_QUERY_NAME + ".B))");
     }
 
     @Test
@@ -432,27 +433,39 @@ class TwoVLTests {
         String result = this.twoVL.translate("    SELECT A\n" +
                 "    FROM R\n" +
                 "    WHERE a != ANY(SELECT a FROM R WHERE a!=b)");
-        assertEquals(result, "SELECT A FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM R WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT (a IS NULL OR S.a IS NULL OR NOT a = S.a))");
+        assertEquals(result, "SELECT A FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT a FROM R WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".a IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".a))");
     }
 
+    @Test
+    void test60() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT a AS b FROM R WHERE a!=c)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT a AS b FROM R WHERE (a IS NULL OR c IS NULL OR NOT a = c)) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a IS NULL OR " + ExpressionUtils.SUB_QUERY_NAME + ".b IS NULL OR NOT a = " + ExpressionUtils.SUB_QUERY_NAME + ".b))");
+    }
 
+    @Test
+    void test61() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a IN (ARRAY[1,2,3]);");
+        assertEquals(result, "SELECT * FROM R WHERE a IN (ARRAY[1, 2, 3])");
+    }
 
-//    @Test
-//    void test58() {
-//        // Action
-//        String result = this.twoVL.translate("SELECT * FROM R WHERE a IN (ARRAY[1,2,3]);");
-//        assertEquals(result, "SELECT * FROM R WHERE a IN (ARRAY[1,2,3]);");
-//    }
+    @Test
+    void test62() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a NOT IN (1,2,3);");
+        assertEquals(result, "SELECT * FROM R WHERE a NOT IN (1, 2, 3)");
+    }
 
-    //    @Test
-//    void test58() {
+    //        @Test
+//    void test60() {
 //        // Action
 //        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT * FROM R WHERE a!=b)");
 //        assertEquals(result, "");
 //    }
 
-    //    @Test
-//    void test58() {
+//        @Test
+//    void test60() {
 //        // Action
 //        String result = this.twoVL.translate("SELECT * FROM R WHERE (SELECT * FROM R) != ANY(SELECT * FROM R WHERE a!=b)");
 //        assertEquals(result, "");

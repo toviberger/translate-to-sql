@@ -77,14 +77,21 @@ public class TrTExpressionVisitor extends TwoVLExpressionVisitor {
             inExpression.setNot(false);
             this.trFVisitor.setParentNode(this.getParentNode());
             inExpression.accept(this.trFVisitor);
-        }
-        else {
-            // t IN (E) :=  t = ANY(E)
-            AnyComparisonExpression newAnyComparisonExpression = new AnyComparisonExpression(
-                    AnyType.ANY, (Select) inExpression.getRightExpression());
-            EqualsTo newEqualsExpression = new EqualsTo(inExpression.getLeftExpression(), newAnyComparisonExpression);
-            setASTNode(newEqualsExpression);
-            newEqualsExpression.accept(this);
+        } else {
+            if (inExpression.getRightExpression() instanceof Select) {
+                // t IN (E) :=  t = ANY(E)
+                AnyComparisonExpression newAnyComparisonExpression = new AnyComparisonExpression(
+                        AnyType.ANY, (Select) inExpression.getRightExpression());
+                EqualsTo newEqualsExpression = new EqualsTo(inExpression.getLeftExpression(), newAnyComparisonExpression);
+                setASTNode(newEqualsExpression);
+                newEqualsExpression.accept(this);
+            }
+            else {
+                setParentNode(inExpression, ChildPosition.LEFT);
+                inExpression.getLeftExpression().accept(this);
+                setParentNode(inExpression, ChildPosition.RIGHT);
+                inExpression.getRightExpression().accept(this);
+            }
         }
     }
 
