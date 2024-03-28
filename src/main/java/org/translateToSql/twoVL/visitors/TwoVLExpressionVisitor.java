@@ -14,7 +14,7 @@ import org.translateToSql.utils.ParentNode;
 
 public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
 
-    private VisitorManager visitorManager;
+    private AlgorithmResources algorithmResources;
     private ParentNode parentNode = new ParentNode();
 
     @Override
@@ -176,7 +176,7 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
 
     @Override
     public void visit(ParenthesedSelect selectBody) {
-        selectBody.accept(this.getVisitorManager().getSelectVisitor());
+        selectBody.accept(this.getAlgorithmResources().getVisitorManager().getSelectVisitor());
     }
 
     @Override
@@ -339,7 +339,7 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
 
     @Override
     public void visit(Select selectBody) {
-        selectBody.accept(this.getVisitorManager().getSelectVisitor());
+        selectBody.accept(this.getAlgorithmResources().getVisitorManager().getSelectVisitor());
     }
 
     @Override
@@ -357,14 +357,8 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
     @Override
     public void visit(TSQLRightJoin tsqlRightJoin) {}
 
-    @Override
     public VisitorManager getVisitorManager() {
-        return this.visitorManager;
-    }
-
-    @Override
-    public void setVisitorManager(VisitorManager visitorManager) {
-        this.visitorManager = visitorManager;
+        return this.algorithmResources.getVisitorManager();
     }
 
     protected void visitBinaryExpression(BinaryExpression expression) {
@@ -387,12 +381,34 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
         this.parentNode.setParent(parentNode.getParentExpression(), parentNode.getChildPosition());
     }
 
+    /***
+     * Sets the AST, change the parent node to point on new expression
+     * @param expression
+     */
     protected void setASTNode(Expression expression){
         if (this.parentNode == null) return;
 
         if (this.parentNode.getChildPosition() == ChildPosition.LEFT){
             if (parentNode.getParentExpression() instanceof BinaryExpression) {
                 ((BinaryExpression) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof Between) {
+                ((Between) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof IsNullExpression) {
+                ((IsNullExpression) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof IsBooleanExpression) {
+                ((IsBooleanExpression) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof InExpression) {
+                ((InExpression) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof LikeExpression) {
+                ((LikeExpression) parentNode.getParentExpression()).setLeftExpression(expression);
+            }
+            if (parentNode.getParentExpression() instanceof CastExpression) {
+                ((CastExpression) parentNode.getParentExpression()).setLeftExpression(expression);
             }
         }
         else {
@@ -402,6 +418,19 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
             if (parentNode.getParentExpression() instanceof ExistsExpression) {
                 ((ExistsExpression) parentNode.getParentExpression()).setRightExpression(expression);
             }
+            if (parentNode.getParentExpression() instanceof InExpression) {
+                ((InExpression) parentNode.getParentExpression()).setRightExpression(expression);
+            }
         }
+    }
+
+    @Override
+    public void setAlgorithmResources(AlgorithmResources algorithmResources) {
+        this.algorithmResources = algorithmResources;
+    }
+
+    @Override
+    public AlgorithmResources getAlgorithmResources(){
+        return this.algorithmResources;
     }
 }

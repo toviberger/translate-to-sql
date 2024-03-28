@@ -6,21 +6,21 @@ import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
 
 /***
- * Class for helper methods for Expression object
+ * Class for holding helper methods for Expression object
  */
 public class ExpressionUtils {
 
     public static final String SUB_QUERY_NAME = "S";
+    public static final String COL_NAME = "col";
 
     /***
      * Checks whether an expression is of the shape t ω t', when t and t' are terms, and ω is +, -, >, < ...
-     * @param expression
+     * @param expression t ω t'
      * @return true is the expression is basic
      */
     public static boolean isBasicExpression(ComparisonOperator expression) {
         return isTerm(expression.getLeftExpression()) && isTerm(expression.getRightExpression());
     }
-
 
     /***
      * Checks whether an expression is a term := n | c | null | f(t1, t2,...) ...
@@ -71,8 +71,8 @@ public class ExpressionUtils {
 
     /***
      * Checks whether an expression is a parenthesed expression list comparison - (t1, t2,...) ω (t'1, t'2,...)
-     * @param expression
-     * @return
+     * @param expression t ω t'
+     * @return true if the  expression is a parenthesed expression list comparison
      */
     public static boolean isParenthesedExpressionListComparison(ComparisonOperator expression) {
         return isParenthesedExpressionList(expression.getLeftExpression()) || isParenthesedExpressionList(expression.getRightExpression());
@@ -81,7 +81,7 @@ public class ExpressionUtils {
     /***
      * Checks whether an expression is a parenthesed expression list - (t1, t2,...)
      * @param expression
-     * @return
+     * @return true if the expression is a parenthesed expression list - (t1, t2,...)
      */
     public static boolean isParenthesedExpressionList(Expression expression){
         if (expression instanceof Parenthesis) return isParenthesedExpressionList(((Parenthesis) expression).getExpression());
@@ -91,7 +91,7 @@ public class ExpressionUtils {
     /***
      * Checks whether an expression is a function - sum, avg, ...
      * @param expression
-     * @return
+     * @return true if the expression is a function
      */
     public static boolean isFunction(Expression expression){
         return expression instanceof Function;
@@ -137,7 +137,7 @@ public class ExpressionUtils {
 
     /***
      * Gets a NotEquals expression and returns the same expression but with =
-     * @param notEqualsTo
+     * @param notEqualsTo t != t'
      * @return an equals expression
      */
     public static EqualsTo createEqualsFromNotEquals(NotEqualsTo notEqualsTo) {
@@ -152,7 +152,7 @@ public class ExpressionUtils {
      * Gets 2 expressions and 1 operator and returns the appropriate expression
      * @param leftExpression
      * @param rightExpression
-     * @param operator
+     * @param operator := =, >, < >=, <=
      * @return a comparison expression
      */
     public static ComparisonOperator createComparisonExpression(Expression leftExpression, Expression rightExpression, String operator){

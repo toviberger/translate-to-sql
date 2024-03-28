@@ -10,9 +10,9 @@ import net.sf.jsqlparser.statement.select.*;
 import org.translateToSql.utils.ChildPosition;
 import org.translateToSql.utils.ExpressionUtils;
 import org.translateToSql.utils.Parser;
+import org.translateToSql.utils.SelectUtils;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static org.translateToSql.utils.ExpressionUtils.*;
 
@@ -171,7 +171,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
 
     /***
      * handle comparison expression, such as =, >, <, >=, <=
-     * @param comparisonExpression
+     * @param comparisonExpression t ω t'
      */
     private void handleComparisonExpression(ComparisonOperator comparisonExpression){
         // if the expression is t ω t', and t and t' are terms
@@ -199,7 +199,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     /***
      * translate t ω ALL(E) to ¬empty(σ_θ(toSQL(E))) := exists(σ_θ(toSQL(E))) = exists(SELECT * FROM (toSQL(E)) AS
      * SUB_QUERY_NAME WHERE θ)
-     * @param expression
+     * @param expression := t ω ALL(E)
      */
     private void handleAllComparison(ComparisonOperator expression) {
         // if the query is of the shape ALL(..) ω t, replace the expressions, i.e. t ω ALL(...)
@@ -219,7 +219,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     /***
      * translate t ω ANY(E) to empty(σ_¬θ(toSQL(E))) = not exists (σ_¬θ(toSQL(E))) = not exists(SELECT * FROM (toSQL(E))
      * AS SUB_QUERY_NAME WHERE ¬θ)
-     * @param expression
+     * @param expression := t ω ANY(E)
      */
     private void handleAnyComparison(ComparisonOperator expression) {
         // if the query is of the shape ALL(..) ω t, replace the expressions, i.e. t ω ALL(...)
@@ -238,15 +238,17 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     }
 
     /***
-     * add to the AST a sub query - (SELECT * FROM (toSQL(E))) AS SUB_QUERY_NAME WHERE (tr_f(t ω l(e))) for ALL expression
+     * adds to the AST a sub query - (SELECT * FROM (toSQL(E))) AS SUB_QUERY_NAME WHERE (tr_f(t ω l(e))) for ALL expression
      * and ¬(tr_f(t ω l(e))) if Any expression
-     * @param select
-     * @param leftExpression
-     * @param operator
-     * @param anyType
+     * @param select := E, the original query
+     * @param leftExpression := t
+     * @param operator := ω, the original operator we need to add to the conditions
+     * @param anyType ALL / ANY query
      */
     private void addSubQuery(Select select, Expression leftExpression, String operator, ExistsExpression existsExpression,
                              String anyType) {
+        ParenthesedExpressionList parenthesedSelectItems = getParenthesedExpressionList(select);
+
         // run toSQL(E)
         setParentNode(existsExpression, ChildPosition.RIGHT);
         select.accept(this.trTExpressionVisitor.getVisitorManager().getSelectVisitor());
@@ -261,7 +263,6 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         // add -  WHERE θ := WHERE (tr_f(t ω l(e)))
         setParentNode(whereDummyRoot, ChildPosition.RIGHT);
         Expression tethaRightExpression;
-        ParenthesedExpressionList parenthesedSelectItems = getParenthesedExpressionList(select);
         if (leftExpression instanceof ParenthesedExpressionList) tethaRightExpression = parenthesedSelectItems;
         else tethaRightExpression = new Column(new Table(SUB_QUERY_NAME), ((Column) parenthesedSelectItems.get(0)).getColumnName());
         Expression tetha = createComparisonExpression(leftExpression, tethaRightExpression, operator);
@@ -276,7 +277,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
 
     /***
      * translate t ω t' to t IS NULL or t' IS NULL or ¬ t ω t'
-     * @param expression
+     * @param expression t ω t'
      */
     private void handleBasicComparison(ComparisonOperator expression) {
         // add t IS NULL and t' IS NULL
@@ -299,7 +300,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     /***
      * gets a comparison expression with parenthesed expression list, i.e. (t1, t2,...) ω (t'1, t'2, ...) and translate
      * it to tr_f(t1 ω t'1) and tr_f(t2 ω t'2) ...
-     * @param expression
+     * @param expression t ω t'
      */
     private void handleParenthesedExpressionList(ComparisonOperator expression){
         ParenthesedExpressionList leftExpression = (ParenthesedExpressionList) expression.getLeftExpression();
@@ -321,10 +322,9 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     }
 
     /***
-     * Gets an expression and checks if we should not add to the query - 'expression' IS NULL. If the expression is not a
-     * term, or is "NULL" or a value, we don't need to add it
+     * Gets an expression and checks if we should not add to the query - 'expression' IS NULL.
      * @param expression
-     * @return
+     * @return true if the expression is a term, or is "NULL" or a value
      */
     private boolean ifNotAddNullCondition(Expression expression){
         if (isTerm(expression)) {
@@ -337,30 +337,90 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     }
 
     /***
-     * Gets a select statement and returns a list of the select items
-     * @param select
-     * @return
+     * Gets a select statement and returns a list of the select items.
+     * @param select a query
+     * @return If it's a Plain select, and the select items is not *, it returns the select items.
+     * If it's *, it returns the columns of the table in the from item.
+     * If it's a SetOperation select, it returns the select items in the first query.
      */
     private List<SelectItem<?>> getSelectItemsList(Select select){
-        if (select instanceof ParenthesedSelect) return getSelectItemsList(((ParenthesedSelect) select).getSelect());
+        if (select instanceof ParenthesedSelect)
+            return getSelectItemsList(((ParenthesedSelect) select).getSelect());
         else if (select instanceof PlainSelect){
+            // case: SELECT *
             if (select.getPlainSelect().getSelectItems().get(0).getExpression() instanceof AllColumns){
-                // case: SELECT *
+                List<SelectItem<?>> itemsList = handleSelectItemIsAllColumns(select.getPlainSelect());
+                // change the query to include all the column names instead of *
+                select.getPlainSelect().setSelectItems(itemsList);
+                return itemsList;
             }
             else {
+                SelectUtils.handleSelectItemsMapping(select.getPlainSelect());
                 return select.getPlainSelect().getSelectItems();
             }
         }
-        else if (select instanceof SetOperationList) return getSelectItemsList(((SetOperationList) select).getSelects().get(0));
+        // get select items of the first query
+        else if (select instanceof SetOperationList)
+            return getSelectItemsList(((SetOperationList) select).getSelects().get(0));
 
         return null;
     }
 
     /***
-     * Gets a select statement and returns the select items as a ParenthesedExpressionList
-     * @param select
-     * @return
+     * In case that we have SELECT * and we need to know what are the columns.
+     * @param select SELECT * FROM ...
+     * @return what are the column names
      */
+    private List<SelectItem<?>> handleSelectItemIsAllColumns(PlainSelect select) {
+        List<SelectItem<?>> selectItemsList = new ArrayList<>();
+        FromItem fromItem = select.getFromItem();
+        if (fromItem instanceof Table){
+            getColumnNamesFromDB(select, (Table) fromItem, selectItemsList);
+        }
+        else if (fromItem instanceof ParenthesedFromItem){
+            select.setFromItem(((ParenthesedFromItem)select.getFromItem()).getFromItem());
+            return handleSelectItemIsAllColumns(select);
+        }
+        else if (fromItem instanceof ParenthesedSelect){
+            return getSelectItemsList((Select) fromItem);
+        }
+        return selectItemsList;
+    }
+
+    /***
+     * @param select SELECT * FROM Table1 ...
+     * @param fromItem Table1 ...
+     * @param selectItemsList a list with the column names
+     */
+    private void getColumnNamesFromDB(PlainSelect select, Table fromItem, List<SelectItem<?>> selectItemsList) {
+        Set<String> SelectItemsSet = new HashSet<>();
+        Map<String, List<String>> tables = this.trTExpressionVisitor.getAlgorithmResources().getDb().getTables();
+        List<String> tableColumns = tables.get(fromItem.getName());
+
+        // adds to the list all the columns from the first table
+        for (String column: tableColumns)
+            selectItemsList.add(new SelectItem<>(new Column(new Table(fromItem.getName()), column)));
+
+        // if there are joins
+        if (select.getPlainSelect().getJoins() != null){
+            for (Join joinTable: select.getPlainSelect().getJoins()){
+                tableColumns = tables.get(((Table) joinTable.getFromItem()).getName());
+                // if there is joi, don't add this column again
+                for (Expression on :joinTable.getOnExpressions()){
+                    SelectItemsSet.add(((Column)((EqualsTo)on).getLeftExpression()).getColumnName());
+                }
+                for (String column: tableColumns)
+                    if (!SelectItemsSet.contains(column))
+                        selectItemsList.add(new SelectItem<>(new Column(new Table(((Table) joinTable.getFromItem()).getName()), column)));
+            }
+        }
+    }
+
+        /***
+         * Gets a select statement and returns the select items as a ParenthesedExpressionList
+         * @param select - for example SELECT a, b,...
+         * @return (a, b)
+         */
     private ParenthesedExpressionList getParenthesedExpressionList(Select select) {
         List<SelectItem<?>> selectItemsList = getSelectItemsList(select);
         ParenthesedExpressionList parenthesedSelectItems = new ParenthesedExpressionList();
@@ -377,8 +437,8 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
 
     /***
      * Gets an comparison operator, with ANY or ALL, and flip the comparison expression if needed
-     * @param expression
-     * @return
+     * @param expression t ω ANY(...) / t ω ALL(...) / ANY(...) ω t ...
+     * @return t ω ANY(...) / t ω ALL(...)
      */
     private ComparisonOperator flipExpression(ComparisonOperator expression) {
         Expression leftExpression = getExpressionWithoutParenthesis(expression.getLeftExpression());

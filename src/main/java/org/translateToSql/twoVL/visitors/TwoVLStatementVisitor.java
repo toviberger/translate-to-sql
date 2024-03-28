@@ -30,11 +30,11 @@ import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.statement.upsert.Upsert;
 import org.translateToSql.ToSqlStatementVisitor;
 import org.translateToSql.VisitorManager;
+import org.translateToSql.AlgorithmResources;
 
 public class TwoVLStatementVisitor implements ToSqlStatementVisitor {
 
-    private VisitorManager visitorManager;
-
+    private AlgorithmResources algorithmResources;
 
     @Override
     public void visit(Analyze analyze) {
@@ -163,7 +163,7 @@ public class TwoVLStatementVisitor implements ToSqlStatementVisitor {
 
     @Override
     public void visit(Select select) {
-        select.accept(this.visitorManager.getSelectVisitor());
+        select.accept(this.algorithmResources.getVisitorManager().getSelectVisitor());
     }
 
     @Override
@@ -257,12 +257,12 @@ public class TwoVLStatementVisitor implements ToSqlStatementVisitor {
     }
 
     @Override
-    public VisitorManager getVisitorManager() {
-        return this.visitorManager;
+    public void setAlgorithmResources(AlgorithmResources algorithmResources) {
+        this.algorithmResources = algorithmResources;
     }
 
     @Override
-    public void setVisitorManager(VisitorManager visitorManager) {
-        this.visitorManager = visitorManager;
+    public AlgorithmResources getAlgorithmResources(){
+        return this.algorithmResources;
     }
 }

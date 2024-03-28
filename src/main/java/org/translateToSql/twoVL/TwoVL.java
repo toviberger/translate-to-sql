@@ -2,6 +2,7 @@ package org.translateToSql.twoVL;
 
 import net.sf.jsqlparser.statement.Statement;
 import org.translateToSql.*;
+import org.translateToSql.database.Database;
 import org.translateToSql.twoVL.visitors.*;
 import org.translateToSql.utils.Parser;
 
@@ -13,8 +14,8 @@ import org.translateToSql.utils.Parser;
 
 public class TwoVL extends TranslateToSql {
 
-    public TwoVL(){
-        super(new TrTExpressionVisitor(), new TwoVLSelectItemVisitor(), new TwoVLSelectVisitor(), new TwoVLFromItemVisitor(), new TwoVLStatementVisitor());
+    public TwoVL(Database db){
+        super(new TrTExpressionVisitor(), new TwoVLSelectItemVisitor(), new TwoVLSelectVisitor(), new TwoVLFromItemVisitor(), new TwoVLStatementVisitor(), db);
     }
 
     @Override

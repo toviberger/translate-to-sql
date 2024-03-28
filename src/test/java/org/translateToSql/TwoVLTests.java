@@ -1,15 +1,27 @@
 package org.translateToSql;
 
+import org.translateToSql.database.Database;
 import org.translateToSql.twoVL.TwoVL;
 import org.junit.jupiter.api.Test;
 import org.translateToSql.utils.ExpressionUtils;
 
 
+import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TwoVLTests {
 
-    TwoVL twoVL = new TwoVL();
+    Map<String, List<String>> tables = new HashMap<>(){{
+        put("R", new ArrayList<>(Arrays.asList("a", "b")));
+        put("D", new ArrayList<>(Arrays.asList("b")));
+        put("C", new ArrayList<>(Arrays.asList("a")));
+        put("L", new ArrayList<>(Arrays.asList("b")));
+
+
+    }};
+    Database db = new Database(tables);
+    TwoVL twoVL = new TwoVL(db);
 
     @Test
     public void test1() {
@@ -457,22 +469,117 @@ class TwoVLTests {
         assertEquals(result, "SELECT * FROM R WHERE a NOT IN (1, 2, 3)");
     }
 
-    //        @Test
-//    void test60() {
-//        // Action
-//        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT * FROM R WHERE a!=b)");
-//        assertEquals(result, "");
-//    }
+    @Test
+    void test63() {
+        // Action
+        String result = this.twoVL.translate("SELECT max(a) as S, b FROM R GROUP BY b HAVING max(a) > 10");
+        assertEquals(result, "SELECT * FROM (SELECT max(a) AS S, b FROM R GROUP BY b) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.S > 10");
+    }
 
-//        @Test
-//    void test60() {
-//        // Action
-//        String result = this.twoVL.translate("SELECT * FROM R WHERE (SELECT * FROM R) != ANY(SELECT * FROM R WHERE a!=b)");
-//        assertEquals(result, "");
-//    }
+    @Test
+    void test64() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM (SELECT max(a) as S, b FROM R GROUP BY b) AS S WHERE S.S > 10");
+        assertEquals(result, "SELECT * FROM (SELECT max(a) AS S, b FROM R GROUP BY b) AS " + ExpressionUtils.SUB_QUERY_NAME+ " WHERE S.S > 10");
+    }
+
+    @Test
+    void test65() {
+        // Action
+        String result = this.twoVL.translate("SELECT max(a), col1 FROM R GROUP BY b HAVING max(a) > 10");
+        assertEquals(result, "SELECT * FROM (SELECT max(a) AS col2, col1 FROM R GROUP BY b) AS " + ExpressionUtils.SUB_QUERY_NAME+ " WHERE S.col2 > 10");
+    }
+
+    @Test
+    void test66() {
+        // Action
+        String result = this.twoVL.translate("SELECT max(b), a FROM R GROUP BY a HAVING max(b) > 10");
+        assertEquals(result, "SELECT * FROM (SELECT max(b) AS col1, a FROM R GROUP BY a) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.col1 > 10");
+    }
+
+    @Test
+    void test67() {
+        // Action
+        String result = this.twoVL.translate("SELECT max(b), col1, col2, max(c) FROM R GROUP BY a HAVING col1 > 10 AND max(c) > 2");
+        assertEquals(result, "SELECT * FROM (SELECT max(b) AS col4, col1, col2, max(c) AS col3 FROM R GROUP BY a) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.col1 > 10 AND S.col3 > 2");
+    }
+
+    @Test
+    void test68() {
+        // Action
+        String result = this.twoVL.translate("SELECT productType, SUM(revenue) - SUM(cost) AS profit\n" +
+                "FROM financials\n" +
+                "GROUP BY productType\n" +
+                "HAVING (SUM(revenue) - SUM(cost)) > 10000;");
+        assertEquals(result, "SELECT * FROM (SELECT productType, SUM(revenue) - SUM(cost) AS profit FROM financials GROUP BY productType) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.profit > 10000");
+    }
+
+    @Test
+    void test69() {
+        // Action
+        String result = this.twoVL.translate("SELECT storeLocation, COUNT(DISTINCT employeeId)\n" +
+                "FROM sales\n" +
+                "GROUP BY storeLocation\n" +
+                "HAVING COUNT(DISTINCT employeeId) > 3;\n");
+        assertEquals(result, "SELECT * FROM (SELECT storeLocation, COUNT(DISTINCT employeeId) AS col1 FROM sales GROUP BY storeLocation) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.col1 > 3");
+    }
+
+    @Test
+    void test70() {
+        // Action
+        String result = this.twoVL.translate("SELECT salesperson, COUNT(saleId)\n" +
+                "FROM sales\n" +
+                "GROUP BY salesperson\n" +
+                "HAVING COUNT(saleId) BETWEEN 5 AND 10;");
+        assertEquals(result, "SELECT * FROM (SELECT salesperson, COUNT(saleId) AS col1 FROM sales GROUP BY salesperson) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.col1 BETWEEN 5 AND 10");
+    }
+
+    @Test
+    void test71() {
+        String result = this.twoVL.translate("SELECT max(b), a FROM R WHERE a != 1 GROUP BY a HAVING max(b) > 10");
+        assertEquals(result, "SELECT * FROM (SELECT max(b) AS col1, a FROM R WHERE (a IS NULL OR NOT a = 1) GROUP BY a) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE S.col1 > 10");
+    }
+
+    @Test
+    void test72() {
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY (SELECT max(b) FROM C)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT max(b) AS col1 FROM C) AS " + ExpressionUtils.SUB_QUERY_NAME + " WHERE NOT (a IS NULL OR S.col1 IS NULL OR NOT a = S.col1))");
+    }
 
 
+    @Test
+    void test73() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT * FROM D WHERE a != b)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT D.b FROM D WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT (a IS NULL OR S.b IS NULL OR NOT a = S.b))");
+    }
 
+    @Test
+    void test74() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE (a, b) != ANY(SELECT * FROM R WHERE a != b)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT R.a, R.b FROM R WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT ((a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b)))");
+    }
 
+    @Test
+    void test75() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE (a, b) != ANY(SELECT * FROM C, D WHERE a != b)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT C.a, D.b FROM C, D WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT ((a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b)))");
+    }
+
+    @Test
+    void test76() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE (a, b) != ANY(SELECT * FROM R JOIN C ON R.a = C.a WHERE a != b)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT R.a, R.b FROM R JOIN C ON R.a = C.a WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT ((a IS NULL OR S.a IS NULL OR NOT a = S.a) AND (b IS NULL OR S.b IS NULL OR NOT b = S.b)))");
+    }
+
+    @Test
+    void test77() {
+        // Action
+        String result = this.twoVL.translate("SELECT * FROM R WHERE a != ANY(SELECT * FROM L JOIN D ON L.b = D.b WHERE a != b)");
+        assertEquals(result, "SELECT * FROM R WHERE NOT EXISTS (SELECT * FROM (SELECT L.b FROM L JOIN D ON L.b = D.b WHERE (a IS NULL OR b IS NULL OR NOT a = b)) AS S WHERE NOT (a IS NULL OR S.b IS NULL OR NOT a = S.b))");
+    }
 }
 

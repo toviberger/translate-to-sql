@@ -5,11 +5,11 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import org.translateToSql.ToSqlSelectItemVisitor;
 import org.translateToSql.VisitorManager;
+import org.translateToSql.AlgorithmResources;
 
 public class TwoVLSelectItemVisitor implements ToSqlSelectItemVisitor {
 
-    private VisitorManager visitorManager;
-
+    private AlgorithmResources algorithmResources;
 
     @Override
     public void visit(SelectItem selectItem) {
@@ -20,13 +20,17 @@ public class TwoVLSelectItemVisitor implements ToSqlSelectItemVisitor {
         selectItem.setExpression(dummyRoot.getRightExpression());
     }
 
-    @Override
     public VisitorManager getVisitorManager() {
-        return this.visitorManager;
+        return this.algorithmResources.getVisitorManager();
     }
 
     @Override
-    public void setVisitorManager(VisitorManager visitorManager) {
-        this.visitorManager = visitorManager;
+    public void setAlgorithmResources(AlgorithmResources algorithmResources) {
+        this.algorithmResources = algorithmResources;
+    }
+
+    @Override
+    public AlgorithmResources getAlgorithmResources(){
+        return this.algorithmResources;
     }
 }

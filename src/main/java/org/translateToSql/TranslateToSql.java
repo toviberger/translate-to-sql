@@ -1,28 +1,32 @@
 package org.translateToSql;
 
+import org.translateToSql.database.Database;
+
 public abstract class TranslateToSql{
-    private VisitorManager visitorManager;
+    private final AlgorithmResources algorithmResources;
 
     protected TranslateToSql(ToSqlExpressionVisitor expressionVisitor,
                              ToSqlSelectItemVisitor selectItemVisitor,
                              ToSqlSelectVisitor selectVisitor,
                              ToSqlFromItemVisitor fromItemVisitor,
-                             ToSqlStatementVisitor statementVisitor) {
-        this.visitorManager = new VisitorManager(expressionVisitor, selectItemVisitor, selectVisitor, fromItemVisitor, statementVisitor);
-        this.visitorManager.getExpressionVisitor().setVisitorManager(this.visitorManager);
-        this.visitorManager.getSelectVisitor().setVisitorManager(this.visitorManager);
-        this.visitorManager.getSelectItemVisitor().setVisitorManager(this.visitorManager);
-        this.visitorManager.getFromItemVisitor().setVisitorManager(this.visitorManager);
-        this.visitorManager.getStatementVisitor().setVisitorManager(this.visitorManager);
+                             ToSqlStatementVisitor statementVisitor,
+                             Database db) {
+        VisitorManager visitorManager = new VisitorManager(expressionVisitor, selectItemVisitor, selectVisitor, fromItemVisitor, statementVisitor);
+        this.algorithmResources = new AlgorithmResources(visitorManager, db);
+        this.algorithmResources.getVisitorManager().getExpressionVisitor().setAlgorithmResources(this.algorithmResources);
+        this.algorithmResources.getVisitorManager().getSelectVisitor().setAlgorithmResources(this.algorithmResources);
+        this.algorithmResources.getVisitorManager().getSelectItemVisitor().setAlgorithmResources(this.algorithmResources);
+        this.algorithmResources.getVisitorManager().getFromItemVisitor().setAlgorithmResources(this.algorithmResources);
+        this.algorithmResources.getVisitorManager().getStatementVisitor().setAlgorithmResources(this.algorithmResources);
     }
 
     public abstract String translate(String query);
 
     public VisitorManager getVisitorManager() {
-        return visitorManager;
+        return this.algorithmResources.getVisitorManager();
     }
 
-    public void setVisitorManager(VisitorManager visitorManager) {
-        this.visitorManager = visitorManager;
+    public Database getDB(){
+        return this.algorithmResources.getDb();
     }
 }

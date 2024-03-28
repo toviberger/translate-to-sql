@@ -1,16 +1,38 @@
 <!DOCTYPE html>
 <html>
-
 <body>
 <h1>Translate To Sql API Request Form</h1>
-
 <h2>Translate to Two VL</h2>
-<p>Enter your query below:</p>
-<form action="/twoVL" method="get">
-    <label for="query">Query:</label><br>
+<form id="translationForm">
+    <label for="dbString">Enter your DB:</label><br>
+    <textarea id="dbString" name="dbString" rows="10" cols="50" placeholder="Table1(col1, col2, ...)
+Table2(col1, col2, ...)
+Table3(col1, col2, ...)
+..."></textarea><br>
+    <label for="query">Enter your Query:</label><br>
     <textarea id="query" name="query" rows="10" cols="50"></textarea><br><br>
 
-    <button type="submit">translate</button>
+    <button type="button" onclick="submitForm()">translate</button>
 </form>
+<div id="result" style="margin-top: 20px; font-size: 20px;"></div>
+
+<script>
+    function submitForm() {
+        var form = document.getElementById('translationForm');
+        var formData = new FormData(form);
+
+        fetch('/twoVL', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('result').innerText = data;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+</script>
 </body>
 </html>

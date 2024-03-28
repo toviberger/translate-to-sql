@@ -7,10 +7,10 @@ import net.sf.jsqlparser.statement.select.ParenthesedSelect;
 import net.sf.jsqlparser.statement.select.TableFunction;
 import org.translateToSql.ToSqlFromItemVisitor;
 import org.translateToSql.VisitorManager;
+import org.translateToSql.AlgorithmResources;
 
 public class TwoVLFromItemVisitor implements ToSqlFromItemVisitor {
-    private VisitorManager visitorManager;
-
+    private AlgorithmResources algorithmResources;
 
     @Override
     public void visit(Table tableName) {}
@@ -31,13 +31,17 @@ public class TwoVLFromItemVisitor implements ToSqlFromItemVisitor {
         aThis.getFromItem().accept(this);
     }
 
-    @Override
     public VisitorManager getVisitorManager() {
-        return this.visitorManager;
+        return this.algorithmResources.getVisitorManager();
     }
 
     @Override
-    public void setVisitorManager(VisitorManager visitorManager) {
-        this.visitorManager = visitorManager;
+    public void setAlgorithmResources(AlgorithmResources algorithmResources) {
+        this.algorithmResources = algorithmResources;
+    }
+
+    @Override
+    public AlgorithmResources getAlgorithmResources(){
+        return this.algorithmResources;
     }
 }

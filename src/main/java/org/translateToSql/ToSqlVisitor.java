@@ -2,7 +2,7 @@ package org.translateToSql;
 
 public interface ToSqlVisitor {
 
-    VisitorManager getVisitorManager();
-    void setVisitorManager(VisitorManager visitorManager);
+    AlgorithmResources getAlgorithmResources();
+    void setAlgorithmResources(AlgorithmResources algorithmResources);
 
 }
