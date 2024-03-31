@@ -6,7 +6,7 @@ import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
 
 /***
- * Class for holding helper methods for Expression object
+ * Class for holding helper methods for the Expression object
  */
 public class ExpressionUtils {
 
@@ -38,9 +38,17 @@ public class ExpressionUtils {
      * @return true is the expression is an arithmetic function
      */
     public static boolean isArithmeticFunction(Expression expression){
-        return expression instanceof Addition || expression instanceof Multiplication || expression instanceof Subtraction || expression instanceof Modulo ||
-                expression instanceof IntegerDivision || expression instanceof Division || expression instanceof Concat || expression instanceof BitwiseAnd ||
-                expression instanceof BitwiseLeftShift || expression instanceof BitwiseOr || expression instanceof BitwiseRightShift;
+        return expression instanceof Addition ||
+                expression instanceof Multiplication ||
+                expression instanceof Subtraction ||
+                expression instanceof Modulo ||
+                expression instanceof IntegerDivision ||
+                expression instanceof Division ||
+                expression instanceof Concat ||
+                expression instanceof BitwiseAnd ||
+                expression instanceof BitwiseLeftShift ||
+                expression instanceof BitwiseOr ||
+                expression instanceof BitwiseRightShift;
     }
 
     /***
@@ -75,7 +83,8 @@ public class ExpressionUtils {
      * @return true if the  expression is a parenthesed expression list comparison
      */
     public static boolean isParenthesedExpressionListComparison(ComparisonOperator expression) {
-        return isParenthesedExpressionList(expression.getLeftExpression()) || isParenthesedExpressionList(expression.getRightExpression());
+        return isParenthesedExpressionList(expression.getLeftExpression()) ||
+                isParenthesedExpressionList(expression.getRightExpression());
     }
 
     /***
@@ -84,7 +93,8 @@ public class ExpressionUtils {
      * @return true if the expression is a parenthesed expression list - (t1, t2,...)
      */
     public static boolean isParenthesedExpressionList(Expression expression){
-        if (expression instanceof Parenthesis) return isParenthesedExpressionList(((Parenthesis) expression).getExpression());
+        if (expression instanceof Parenthesis)
+            return isParenthesedExpressionList(((Parenthesis) expression).getExpression());
         return expression instanceof ParenthesedExpressionList;
     }
 
@@ -204,7 +214,8 @@ public class ExpressionUtils {
      * @return an expression without parenthesis
      */
     public static Expression getExpressionWithoutParenthesis(Expression expression){
-        if (expression instanceof Parenthesis) return getExpressionWithoutParenthesis(((Parenthesis) expression).getExpression());
+        if (expression instanceof Parenthesis)
+            return getExpressionWithoutParenthesis(((Parenthesis) expression).getExpression());
         return expression;
     }
 }

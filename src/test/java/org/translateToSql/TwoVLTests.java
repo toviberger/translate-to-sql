@@ -1,7 +1,7 @@
 package org.translateToSql;
 
-import org.translateToSql.database.Database;
-import org.translateToSql.twoVL.TwoVL;
+import org.translateToSql.model.Database;
+import org.translateToSql.core.TwoVL;
 import org.junit.jupiter.api.Test;
 import org.translateToSql.utils.ExpressionUtils;
 
@@ -17,8 +17,7 @@ class TwoVLTests {
         put("D", new ArrayList<>(Arrays.asList("b")));
         put("C", new ArrayList<>(Arrays.asList("a")));
         put("L", new ArrayList<>(Arrays.asList("b")));
-
-
+        put("Employees", new ArrayList<>(Arrays.asList("Department", "Salary")));
     }};
     Database db = new Database(tables);
     TwoVL twoVL = new TwoVL(db);
@@ -26,15 +25,15 @@ class TwoVLTests {
     @Test
     public void test1() {
         // Action
-        String result = this.twoVL.translate("SELECT * FROM Employees as e");
-        assertEquals(result, "SELECT * FROM Employees AS e");
+        String result = this.twoVL.translate("SELECT * FROM R as e");
+        assertEquals(result, "SELECT * FROM R AS e");
     }
 
     @Test
     void test2() {
         // Action
-        String result = this.twoVL.translate("SELECT * FROM Employees WHERE Department = 'HR' AND Salary > 50000");
-        assertEquals(result, "SELECT * FROM Employees WHERE Department = 'HR' AND Salary > 50000");
+        String result = this.twoVL.translate("SELECT * FROM Employees WHERE Employees.Department = 'HR' AND Employees.Salary > 50000");
+        assertEquals(result, "SELECT * FROM Employees WHERE Employees.Department = 'HR' AND Employees.Salary > 50000");
     }
 
     @Test

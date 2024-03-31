@@ -5,7 +5,7 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
 /***
- * Class for parsing a query to and from AST representation, by using JSqlParser lib
+ * Class for parsing a query to and AST representation, by using JSqlParser lib, and vice versa
  */
 public class Parser {
 
