@@ -1,11 +1,11 @@
-package org.translateToSql.utils;
+package org.translateToSql.core;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
 /***
- * Class for parsing a query to and AST representation, by using JSqlParser lib, and vice versa
+ * Class for parsing a query to AST representation, by using JSqlParser lib, and vice versa
  */
 public class Parser {
 

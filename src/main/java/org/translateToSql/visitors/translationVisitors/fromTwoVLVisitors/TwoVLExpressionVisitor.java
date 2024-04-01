@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.twoVLVisitors;
+package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;

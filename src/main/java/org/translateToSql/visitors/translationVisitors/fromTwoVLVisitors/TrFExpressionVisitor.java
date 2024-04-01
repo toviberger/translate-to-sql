@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.twoVLVisitors;
+package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -9,7 +9,7 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 import org.translateToSql.model.ChildPosition;
 import org.translateToSql.utils.ExpressionUtils;
-import org.translateToSql.utils.Parser;
+import org.translateToSql.core.Parser;
 import org.translateToSql.utils.SelectUtils;
 
 import java.util.*;
@@ -27,12 +27,14 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     @Override
     public void visit(Column column) {
         // tr_f(true) = false
-        if (Objects.equals(column.getColumnName(), "TRUE")){
+        if (Objects.equals(column.getColumnName().toUpperCase(), "TRUE")){
             column.setColumnName("FALSE");
         }
         // tr_f(false) = true
-        else if (Objects.equals(column.getColumnName(), "FALSE")) {
+        else if (Objects.equals(column.getColumnName().toUpperCase(), "FALSE")) {
             column.setColumnName("TRUE");}
+
+        else {setASTNode(new NotExpression(column));}
     }
 
     @Override
@@ -129,9 +131,9 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
             else {
                 inExpression.setNot(true);
                 setParentNode(inExpression, ChildPosition.LEFT);
-                inExpression.getLeftExpression().accept(this);
+                inExpression.getLeftExpression().accept(this.trTExpressionVisitor);
                 setParentNode(inExpression, ChildPosition.RIGHT);
-                inExpression.getRightExpression().accept(this);
+                inExpression.getRightExpression().accept(this.trTExpressionVisitor);
             }
         }
     }
@@ -331,9 +333,10 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      */
     private boolean ifNotAddNullCondition(Expression expression){
         if (isTerm(expression)) {
-            if (expression instanceof Column && (Objects.equals(((Column) expression).getColumnName(), "ANY") ||
-                    Objects.equals(((Column) expression).getColumnName(), "NULL") ||
-                    Objects.equals(((Column) expression).getColumnName(), "ALL")))return true;
+            if (expression instanceof Column && (Objects.equals(((Column) expression).getColumnName().toUpperCase(), "ANY") ||
+                    Objects.equals(((Column) expression).getColumnName().toUpperCase(), "NULL") ||
+                    Objects.equals(((Column) expression).getColumnName().toUpperCase(), "ALL")))
+                return true;
             return isValue(expression) || isFunction(expression);
         }
         return true;
@@ -419,11 +422,11 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         }
     }
 
-        /***
-         * Gets a select statement and returns the select items as a ParenthesedExpressionList
-         * @param select - for example SELECT a, b,...
-         * @return (a, b)
-         */
+    /***
+     * Gets a select statement and returns the select items as a ParenthesedExpressionList
+     * @param select - for example SELECT a, b,...
+     * @return (a, b)
+     */
     private ParenthesedExpressionList getParenthesedExpressionList(Select select) {
         List<SelectItem<?>> selectItemsList = getSelectItemsList(select);
         ParenthesedExpressionList parenthesedSelectItems = new ParenthesedExpressionList();

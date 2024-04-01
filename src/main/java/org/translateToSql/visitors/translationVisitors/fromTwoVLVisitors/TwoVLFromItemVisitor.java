@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.twoVLVisitors;
+package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;

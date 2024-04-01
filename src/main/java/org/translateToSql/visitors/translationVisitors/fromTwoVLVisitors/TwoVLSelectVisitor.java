@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.twoVLVisitors;
+package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -9,7 +9,7 @@ import org.translateToSql.visitors.translationVisitors.ToSqlSelectVisitor;
 import org.translateToSql.management.VisitorManager;
 import org.translateToSql.management.AlgorithmResources;
 import org.translateToSql.utils.ExpressionUtils;
-import org.translateToSql.utils.Parser;
+import org.translateToSql.core.Parser;
 import org.translateToSql.utils.SelectUtils;
 
 import java.util.Map;

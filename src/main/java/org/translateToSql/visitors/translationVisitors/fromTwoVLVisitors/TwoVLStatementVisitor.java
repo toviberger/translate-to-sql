@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.twoVLVisitors;
+package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.statement.*;
 import net.sf.jsqlparser.statement.alter.Alter;
