@@ -1,9 +1,9 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SelectItem;
-import org.translateToSql.visitors.translationVisitors.ToSqlSelectItemVisitor;
+import org.translateToSql.translationVisitors.ToSqlSelectItemVisitor;
 import org.translateToSql.management.VisitorManager;
 import org.translateToSql.management.AlgorithmResources;
 
@@ -13,7 +13,7 @@ public class TwoVLSelectItemVisitor implements ToSqlSelectItemVisitor {
 
     @Override
     public void visit(SelectItem selectItem) {
-        // a dummy root for the expression AST
+        // a dummy root for the expression AST, so we could be able to change it if needed
         AndExpression dummyRoot = new AndExpression(new Column("TRUE"), selectItem.getExpression());
         selectItem.setExpression(dummyRoot);
         selectItem.getExpression().accept(this.getVisitorManager().getExpressionVisitor());

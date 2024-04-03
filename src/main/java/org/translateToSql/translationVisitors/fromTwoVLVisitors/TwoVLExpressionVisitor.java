@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
@@ -12,7 +12,7 @@ import org.translateToSql.management.AlgorithmResources;
 import org.translateToSql.management.VisitorManager;
 import org.translateToSql.model.ChildPosition;
 import org.translateToSql.model.ParentNode;
-import org.translateToSql.visitors.translationVisitors.ToSqlExpressionVisitor;
+import org.translateToSql.translationVisitors.ToSqlExpressionVisitor;
 
 public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
 
@@ -385,7 +385,7 @@ public class TwoVLExpressionVisitor implements ToSqlExpressionVisitor {
 
     /***
      * Sets the AST, change the parent node to point on new expression
-     * @param expression
+     * @param expression the new expression to point on
      */
     protected void setASTNode(Expression expression){
         if (this.parentNode == null) return;

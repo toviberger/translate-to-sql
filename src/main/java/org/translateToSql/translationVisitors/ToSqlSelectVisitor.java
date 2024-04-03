@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors;
+package org.translateToSql.translationVisitors;
 
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 

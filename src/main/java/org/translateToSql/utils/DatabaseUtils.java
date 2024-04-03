@@ -1,6 +1,6 @@
 package org.translateToSql.utils;
 
-import org.translateToSql.model.Database;
+import org.translateToSql.model.DatabaseMetadata;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -9,11 +9,11 @@ import java.util.regex.Pattern;
 public class DatabaseUtils {
 
     /***
-     * Gets a string that represents a database and converts it to a database object
+     * Gets a string that represents a database metadata and converts it to a DatabaseMetadata object
      * @param dbString "Table1(col1, col2,...) \n Table2(col1, col2,...) .... "
      */
-    public static Database parseDbStringToDbObject(String dbString){
-        Database dbObject = new Database();
+    public static DatabaseMetadata parseDbStringToDbObject(String dbString){
+        DatabaseMetadata dbObject = new DatabaseMetadata();
         String[] tableDefinitions = dbString.split("\\n+");
 
         // Pattern to match table name and columns (e.g., R(a,b))

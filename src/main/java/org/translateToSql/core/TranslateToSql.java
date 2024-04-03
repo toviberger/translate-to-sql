@@ -1,12 +1,15 @@
 package org.translateToSql.core;
 
-import net.sf.jsqlparser.statement.Statement;
 import org.translateToSql.management.AlgorithmResources;
 import org.translateToSql.management.VisitorManager;
-import org.translateToSql.model.Database;
-import org.translateToSql.visitors.translationVisitors.*;
-import org.translateToSql.visitors.validationVisitors.ValidationStatementVisitor;
+import org.translateToSql.model.DatabaseMetadata;
+import org.translateToSql.translationVisitors.*;
 
+/***
+ * An abstract base class that outlines the structure for translation classes. It initializes essential components such
+ * as various specialized visitors (ToSqlExpressionVisitor, ToSqlSelectVisitor, etc.) and DatabaseMetaData, which represent
+ * the schema information of the target database.
+ */
 public abstract class TranslateToSql{
     private final AlgorithmResources algorithmResources;
 
@@ -15,7 +18,7 @@ public abstract class TranslateToSql{
                              ToSqlSelectVisitor selectVisitor,
                              ToSqlFromItemVisitor fromItemVisitor,
                              ToSqlStatementVisitor statementVisitor,
-                             Database db) {
+                             DatabaseMetadata db) {
         VisitorManager visitorManager = new VisitorManager(expressionVisitor, selectItemVisitor, selectVisitor, fromItemVisitor, statementVisitor);
         this.algorithmResources = new AlgorithmResources(visitorManager, db);
         this.algorithmResources.getVisitorManager().getExpressionVisitor().setAlgorithmResources(this.algorithmResources);
@@ -31,11 +34,7 @@ public abstract class TranslateToSql{
         return this.algorithmResources.getVisitorManager();
     }
 
-    public Database getDB(){
+    public DatabaseMetadata getDB(){
         return this.algorithmResources.getDb();
-    }
-
-    public void validate(Statement query){
-        query.accept(new ValidationStatementVisitor(this.getDB()));
     }
 }

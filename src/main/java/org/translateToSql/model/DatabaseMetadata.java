@@ -3,17 +3,17 @@ package org.translateToSql.model;
 import java.util.*;
 
 /***
- * A class for representing a Database. It has a Map that contains a table name and its column names.
+ * A class for representing a Database metadata. It has a Map that contains a table name and its column names.
  */
-public class Database {
+public class DatabaseMetadata {
 
     private Map<String, List<String>> tables;
 
-    public Database(){
+    public DatabaseMetadata(){
         this.tables = new HashMap<>();
     }
 
-    public Database(Map<String, List<String>> tables){
+    public DatabaseMetadata(Map<String, List<String>> tables){
         this.tables = tables;
     }
 

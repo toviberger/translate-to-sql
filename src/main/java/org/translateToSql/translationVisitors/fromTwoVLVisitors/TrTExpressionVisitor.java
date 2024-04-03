@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
 import net.sf.jsqlparser.expression.AnyType;
@@ -77,7 +77,8 @@ public class TrTExpressionVisitor extends TwoVLExpressionVisitor {
             inExpression.setNot(false);
             this.trFVisitor.setParentNode(this.getParentNode());
             inExpression.accept(this.trFVisitor);
-        } else {
+        }
+        else {
             if (inExpression.getRightExpression() instanceof Select) {
                 // t IN (E) :=  t = ANY(E)
                 AnyComparisonExpression newAnyComparisonExpression = new AnyComparisonExpression(
@@ -87,6 +88,7 @@ public class TrTExpressionVisitor extends TwoVLExpressionVisitor {
                 newEqualsExpression.accept(this);
             }
             else {
+                // t IN (ARRAY...)
                 setParentNode(inExpression, ChildPosition.LEFT);
                 inExpression.getLeftExpression().accept(this);
                 setParentNode(inExpression, ChildPosition.RIGHT);

@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -8,7 +8,6 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 import org.translateToSql.model.ChildPosition;
-import org.translateToSql.utils.ExpressionUtils;
 import org.translateToSql.core.Parser;
 import org.translateToSql.utils.SelectUtils;
 
@@ -121,14 +120,15 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
             inExpression.accept(this.trTExpressionVisitor);
         }
         else {
-            // tr_f(t IN (E)) :=  tr_f(t = ANY(E))
             if (inExpression.getRightExpression() instanceof Select) {
+                // tr_f(t IN (E)) :=  tr_f(t = ALL(E))
                 Expression newEqualsExpression = new EqualsTo(inExpression.getLeftExpression(),
-                        new AnyComparisonExpression(AnyType.ANY, (Select) inExpression.getRightExpression()));
+                        new AnyComparisonExpression(AnyType.ALL, (Select) inExpression.getRightExpression()));
                 setASTNode(newEqualsExpression);
                 newEqualsExpression.accept(this);
             }
             else {
+                // t IN (ARRAY...)
                 inExpression.setNot(true);
                 setParentNode(inExpression, ChildPosition.LEFT);
                 inExpression.getLeftExpression().accept(this.trTExpressionVisitor);
@@ -215,7 +215,8 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         setASTNode(existsExpr);
 
         // add (SELECT * FROM (toSQL(E))) AS SUB_QUERY_NAME
-        addSubQuery(allSelect, fixedExpression.getLeftExpression(), operator, existsExpr, "ALL");
+        String tableName = getTableName(fixedExpression.getLeftExpression());
+        addSubQuery(allSelect, fixedExpression.getLeftExpression(), operator, existsExpr, "ALL", tableName);
     }
 
     /***
@@ -236,7 +237,8 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         setASTNode(notExistsExpr);
 
         // add (SELECT * FROM (toSQL(E))) AS SUB_QUERY_NAME WHERE ¬(tr_f(t ω l(e)))
-        addSubQuery(anySelect, fixedExpression.getLeftExpression(), operator, notExistsExpr, "ANY");
+        String tableName = getTableName(fixedExpression.getLeftExpression());
+        addSubQuery(anySelect, fixedExpression.getLeftExpression(), operator, notExistsExpr, "ANY", tableName);
     }
 
     /***
@@ -248,7 +250,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      * @param anyType ALL / ANY query
      */
     private void addSubQuery(Select select, Expression leftExpression, String operator, ExistsExpression existsExpression,
-                             String anyType) {
+                             String anyType, String tableName) {
         ParenthesedExpressionList parenthesedSelectItems = getParenthesedExpressionList(select);
 
         // run toSQL(E)
@@ -266,8 +268,16 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         // add -  WHERE θ := WHERE (tr_f(t ω l(e)))
         setParentNode(whereDummyRoot, ChildPosition.RIGHT);
         Expression tethaRightExpression;
-        if (leftExpression instanceof ParenthesedExpressionList) tethaRightExpression = parenthesedSelectItems;
-        else tethaRightExpression = new Column(new Table(SUB_QUERY_NAME), ((Column) parenthesedSelectItems.get(0)).getColumnName());
+        if (leftExpression instanceof ParenthesedExpressionList)
+        {
+            tethaRightExpression = parenthesedSelectItems;
+            ((ParenthesedExpressionList<?>) leftExpression).forEach(expression -> setTableName(expression, tableName));
+        }
+        else {
+            tethaRightExpression = new Column(new Table(SUB_QUERY_NAME), ((Column) parenthesedSelectItems.get(0)).getColumnName());
+            // make sure the expression has the table name
+            setTableName(leftExpression, tableName);
+        }
         Expression tetha = createComparisonExpression(leftExpression, tethaRightExpression, operator);
         // calculate tr_f(t ω l(e))
         whereDummyRoot.setRightExpression(tetha);
@@ -284,8 +294,8 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      */
     private void handleBasicComparison(ComparisonOperator expression) {
         // add t IS NULL and t' IS NULL
-        IsNullExpression leftIsNullExpr = ExpressionUtils.createIsNULExpression(expression.getLeftExpression());
-        IsNullExpression rightIsNullExpr = ExpressionUtils.createIsNULExpression(expression.getRightExpression());
+        IsNullExpression leftIsNullExpr = createIsNULExpression(expression.getLeftExpression());
+        IsNullExpression rightIsNullExpr = createIsNULExpression(expression.getRightExpression());
         OrExpression combinedExpression = new OrExpression();
         if (ifNotAddNullCondition(expression.getLeftExpression())) {
             combinedExpression.setLeftExpression(rightIsNullExpr);
@@ -315,8 +325,12 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
         int index = 1;
         // if there is more than one item changes them also
         while (index < leftExpression.size()){
-            Expression additionalCondition = createComparisonExpression(
-                    (Expression) leftExpression.get(index), (Expression) rightExpression.get(index), expression.getStringExpression());
+            Expression additionalCondition =
+                    createComparisonExpression(
+                            (Expression) leftExpression.get(index),
+                            (Expression) rightExpression.get(index),
+                            expression.getStringExpression()
+                    );
             newWhere = new OrExpression(newWhere, additionalCondition);
             index ++;
         }
@@ -333,7 +347,8 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      */
     private boolean ifNotAddNullCondition(Expression expression){
         if (isTerm(expression)) {
-            if (expression instanceof Column && (Objects.equals(((Column) expression).getColumnName().toUpperCase(), "ANY") ||
+            if (expression instanceof Column && (
+                    Objects.equals(((Column) expression).getColumnName().toUpperCase(), "ANY") ||
                     Objects.equals(((Column) expression).getColumnName().toUpperCase(), "NULL") ||
                     Objects.equals(((Column) expression).getColumnName().toUpperCase(), "ALL")))
                 return true;
@@ -399,7 +414,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      * @param selectItemsList a list with the column names
      */
     private void getColumnNamesFromDB(PlainSelect select, Table fromItem, List<SelectItem<?>> selectItemsList) {
-        Set<String> SelectItemsSet = new HashSet<>();
+        Set<String> duplicateColumns = new HashSet<>();
         Map<String, List<String>> tables = this.trTExpressionVisitor.getAlgorithmResources().getDb().getTables();
         List<String> tableColumns = tables.get(fromItem.getName());
 
@@ -409,15 +424,17 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
 
         // if there are joins
         if (select.getPlainSelect().getJoins() != null){
-            for (Join joinTable: select.getPlainSelect().getJoins()){
-                tableColumns = tables.get(((Table) joinTable.getFromItem()).getName());
-                // if there is joi, don't add this column again
-                for (Expression on :joinTable.getOnExpressions()){
-                    SelectItemsSet.add(((Column)((EqualsTo)on).getLeftExpression()).getColumnName());
+            for (Join join: select.getPlainSelect().getJoins()){
+                String joinTableName = ((Table) join.getFromItem()).getName();
+                tableColumns = tables.get(joinTableName);
+                // if there is 'ON', don't add the same column again - so add it to the set
+                for (Expression on :join.getOnExpressions()){
+                    duplicateColumns.add(((Column)((EqualsTo)on).getLeftExpression()).getColumnName());
                 }
+                // add the other columns
                 for (String column: tableColumns)
-                    if (!SelectItemsSet.contains(column))
-                        selectItemsList.add(new SelectItem<>(new Column(new Table(((Table) joinTable.getFromItem()).getName()), column)));
+                    if (!duplicateColumns.contains(column))
+                        selectItemsList.add(new SelectItem<>(new Column(new Table(joinTableName), column)));
             }
         }
     }
@@ -430,12 +447,15 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     private ParenthesedExpressionList getParenthesedExpressionList(Select select) {
         List<SelectItem<?>> selectItemsList = getSelectItemsList(select);
         ParenthesedExpressionList parenthesedSelectItems = new ParenthesedExpressionList();
+        Table table = new Table(SUB_QUERY_NAME);
+
+        // add each select item to the parenthesedSelectItems, with their alias/ table name
         for (SelectItem item : selectItemsList) {
             if (item.getExpression() instanceof Column && item.getAlias() == null) {
-                parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), ((Column) item.getExpression()).getColumnName()));
+                parenthesedSelectItems.add(new Column(table, ((Column) item.getExpression()).getColumnName()));
             }
             else {
-                parenthesedSelectItems.add(new Column(new Table(SUB_QUERY_NAME), item.getAlias().getName()));
+                parenthesedSelectItems.add(new Column(table, item.getAlias().getName()));
             }
         }
         return parenthesedSelectItems;

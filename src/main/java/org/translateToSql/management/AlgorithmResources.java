@@ -1,17 +1,17 @@
 package org.translateToSql.management;
 
-import org.translateToSql.model.Database;
+import org.translateToSql.model.DatabaseMetadata;
 
 /***
- * The AlgorithmResources class serves as a central repository providing essential resources, including visitor
- * coordination and database access, necessary for the execution of the algorithms.
+ *  Bundles together resources essential for the translation algorithm, including VisitorManager and DatabaseMetaData.
+ *  This encapsulation facilitates easy access to shared resources across different visitors.
  */
 public class AlgorithmResources {
 
     private VisitorManager visitorManager;
-    private Database db;
+    private DatabaseMetadata db;
 
-    public AlgorithmResources(VisitorManager visitorManager, Database db){
+    public AlgorithmResources(VisitorManager visitorManager, DatabaseMetadata db){
         this.visitorManager = visitorManager;
         this.db = db;
     }
@@ -24,11 +24,11 @@ public class AlgorithmResources {
         this.visitorManager = visitorManager;
     }
 
-    public Database getDb() {
+    public DatabaseMetadata getDb() {
         return db;
     }
 
-    public void setDb(Database db) {
+    public void setDb(DatabaseMetadata db) {
         this.db = db;
     }
 }

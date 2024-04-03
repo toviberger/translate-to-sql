@@ -3,7 +3,11 @@ package org.translateToSql.utils;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
 import net.sf.jsqlparser.expression.operators.relational.*;
+import net.sf.jsqlparser.parser.SimpleNode;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.PlainSelect;
 
 /***
  * Class for holding helper methods for the Expression object
@@ -132,7 +136,8 @@ public class ExpressionUtils {
      */
     private static boolean isAnyExpression(Expression expression){
         if (expression instanceof Parenthesis) return isAnyExpression(((Parenthesis) expression).getExpression());
-        return expression instanceof AnyComparisonExpression && ((AnyComparisonExpression) expression).getAnyType() == AnyType.ANY;
+        return expression instanceof AnyComparisonExpression && (
+                (AnyComparisonExpression) expression).getAnyType() == AnyType.ANY;
     }
 
     /***
@@ -142,7 +147,8 @@ public class ExpressionUtils {
      */
     private static boolean isAllExpression(Expression expression){
         if (expression instanceof Parenthesis) return isAllExpression(((Parenthesis) expression).getExpression());
-        return expression instanceof AnyComparisonExpression && ((AnyComparisonExpression) expression).getAnyType() == AnyType.ALL;
+        return expression instanceof AnyComparisonExpression && (
+                (AnyComparisonExpression) expression).getAnyType() == AnyType.ALL;
     }
 
     /***
@@ -217,5 +223,43 @@ public class ExpressionUtils {
         if (expression instanceof Parenthesis)
             return getExpressionWithoutParenthesis(((Parenthesis) expression).getExpression());
         return expression;
+    }
+
+    /***
+     * gets an expression and returns its table name
+     * @param expression
+     * @return table name / alias
+     */
+    public static String getTableName(Expression expression){
+        SimpleNode node;
+        if (expression instanceof BinaryExpression) node = ((BinaryExpression) expression).getLeftExpression().getASTNode();
+        else node = expression.getASTNode();
+
+        // calculate the root of the AST, to get the Select
+        while (node.jjtGetParent() != null){
+            node = (SimpleNode) node.jjtGetParent();
+        }
+
+        FromItem fromItem = ((PlainSelect) ((SimpleNode)node.jjtGetChild(0)).jjtGetValue()).getFromItem();
+        if (fromItem.getAlias() != null)
+            return fromItem.getAlias().getName();
+        else
+            return ((Table) fromItem).getName().toString();
+    }
+
+    /***
+     * get an expression ant its table name and if it is a column it sets the table name
+     * @param expression
+     * @param table table name
+     */
+    public static void setTableName(Expression expression, String table){
+        if (expression instanceof BinaryExpression){
+            setTableName(((BinaryExpression) expression).getLeftExpression(), table);
+            setTableName(((BinaryExpression) expression).getRightExpression(), table);
+        }
+
+        if (expression instanceof Column){
+            ((Column) expression).setTable(new Table(table));
+        }
     }
 }

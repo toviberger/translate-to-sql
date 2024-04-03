@@ -1,11 +1,11 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
 import net.sf.jsqlparser.statement.select.ParenthesedFromItem;
 import net.sf.jsqlparser.statement.select.ParenthesedSelect;
 import net.sf.jsqlparser.statement.select.TableFunction;
-import org.translateToSql.visitors.translationVisitors.ToSqlFromItemVisitor;
+import org.translateToSql.translationVisitors.ToSqlFromItemVisitor;
 import org.translateToSql.management.VisitorManager;
 import org.translateToSql.management.AlgorithmResources;
 

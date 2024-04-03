@@ -1,4 +1,4 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.statement.*;
 import net.sf.jsqlparser.statement.alter.Alter;
@@ -28,7 +28,7 @@ import net.sf.jsqlparser.statement.show.ShowTablesStatement;
 import net.sf.jsqlparser.statement.truncate.Truncate;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.statement.upsert.Upsert;
-import org.translateToSql.visitors.translationVisitors.ToSqlStatementVisitor;
+import org.translateToSql.translationVisitors.ToSqlStatementVisitor;
 import org.translateToSql.management.AlgorithmResources;
 
 public class TwoVLStatementVisitor implements ToSqlStatementVisitor {

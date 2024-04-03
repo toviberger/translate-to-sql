@@ -1,18 +1,18 @@
 package org.translateToSql.core;
 
 import net.sf.jsqlparser.statement.Statement;
-import org.translateToSql.model.Database;
-import org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors.*;
+import org.translateToSql.model.DatabaseMetadata;
+import org.translateToSql.translationVisitors.fromTwoVLVisitors.*;
 
 /***
  * A concrete implementation of the abstract TranslateToSql class, designed to perform specific translation tasks on
- * SQL queries (their AST representations), using two-valued logic (2VL). Implements the translation algorithm based on
+ * SQL queries, using two-valued logic (2VL). Implements the translation algorithm based on
  * the principles described in the article "Handling SQL Nulls with Two-Valued Logic".
  */
 
 public class TranslateFromTwoVL extends TranslateToSql {
 
-    public TranslateFromTwoVL(Database db){
+    public TranslateFromTwoVL(DatabaseMetadata db){
         super(
                 new TrTExpressionVisitor(),
                 new TwoVLSelectItemVisitor(),
@@ -28,8 +28,6 @@ public class TranslateFromTwoVL extends TranslateToSql {
         try {
             // convert query to AST representation
             Statement statement = Parser.parseStringToAst(query);
-            // validate
-//            this.validate(statement);
             // translate toSQL
             statement.accept(this.getVisitorManager().getStatementVisitor());
             // convert to string
@@ -38,6 +36,5 @@ public class TranslateFromTwoVL extends TranslateToSql {
         catch (Exception e){
             return "illegal query";
         }
-
     }
 }

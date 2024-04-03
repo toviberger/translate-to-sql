@@ -1,7 +1,7 @@
 package org.translateToSql.model;
 
 /***
- * Enum for representing a child node position in a tree - left or right child
+ * Enum for representing a child node position in an AST (abstract syntax tree) - left or right child
  */
 public enum ChildPosition {
     LEFT("left"),

@@ -1,11 +1,11 @@
-package org.translateToSql.visitors.translationVisitors.fromTwoVLVisitors;
+package org.translateToSql.translationVisitors.fromTwoVLVisitors;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.*;
-import org.translateToSql.visitors.translationVisitors.ToSqlSelectVisitor;
+import org.translateToSql.translationVisitors.ToSqlSelectVisitor;
 import org.translateToSql.management.VisitorManager;
 import org.translateToSql.management.AlgorithmResources;
 import org.translateToSql.utils.ExpressionUtils;
@@ -63,7 +63,7 @@ public class TwoVLSelectVisitor implements ToSqlSelectVisitor {
     }
 
     /***
-     * translates a query that doesn't have having. translates select items, from items and the conditions in where
+     * translates a query that doesn't have 'having'. Translates select items, from items and the conditions in where
      * @param plainSelect SELECT ... FROM ... (WHERE ...)
      */
     private void handleSelectWithoutHaving(PlainSelect plainSelect) {
@@ -75,7 +75,7 @@ public class TwoVLSelectVisitor implements ToSqlSelectVisitor {
 
         // visit where conditions
         if (plainSelect.getWhere() != null) {
-            // dummy root for the where AST
+            // dummy root for the where AST, so we could be able to change it if needed
             AndExpression dummyRoot = new AndExpression(new Column("TRUE"), plainSelect.getWhere());
             plainSelect.setWhere(dummyRoot);
             plainSelect.getWhere().accept(this.getVisitorManager().getExpressionVisitor());

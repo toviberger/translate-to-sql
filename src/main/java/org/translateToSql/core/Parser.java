@@ -10,10 +10,9 @@ import net.sf.jsqlparser.statement.Statement;
 public class Parser {
 
     /**
-     * Gets an SQL query as a string and converts it to a Statement object - hierarchical object for representing a query,
-     * like an AST - Abstract Syntax Tree
+     * Gets an SQL query as a string and converts it to an AST - Abstract Syntax Tree - hierarchical object for representing a query,
      * @param sqlString query as a string
-     * @return representation of the query as a Statement
+     * @return Statement, the root of the AST
      */
     public static Statement parseStringToAst(String sqlString) {
         try {

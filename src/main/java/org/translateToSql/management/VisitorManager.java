@@ -1,6 +1,6 @@
 package org.translateToSql.management;
 
-import org.translateToSql.visitors.translationVisitors.*;
+import org.translateToSql.translationVisitors.*;
 
 /***
  * Serves as a central coordinator for managing different types of visitor objects, each specialized in traversing and
