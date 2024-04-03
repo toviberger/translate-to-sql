@@ -46,20 +46,3 @@ This project is based on the algorithm described in the article "Handling SQL Nu
 
 ## 2VL logic
 Implements the translation algorithm based on the principles described in the article "Handling SQL Nulls with Two-Valued Logic".
-
-### Unsupported grammer
-1. The project does not support the specific pattern
-```sql
-SELECT ...
-FROM ...
-WHERE column_name != ANY(SELECT * FROM ...)
-```
-queries that use the != ANY or != ALL constructs in combination with a subquery selecting all columns using *.
-To utilize similar functionality within the supported features of the project, you can modify the subquery to explicitly list all column names instead of using *.
-
-```sql
-SELECT ...
-FROM ...
-WHERE column_name != ANY(SELECT column1_name FROM ...);
-```
-
