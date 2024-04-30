@@ -40,9 +40,7 @@ mvn spring-boot:run
 
 ## Acknowledgements
 Thanks to the JSqlParser library for providing SQL parsing capabilities.
-This project is based on the algorithm described in the article "Handling SQL Nulls with Two-Valued Logic".
-
 
 
 ## 2VL logic
-Implements the translation algorithm based on the principles described in the article "Handling SQL Nulls with Two-Valued Logic".
+Implements the translation algorithm based on the principles described in the article 'Handling SQL Nulls with Two-Valued Logic' by Libkin and Peterfreund (2022).
