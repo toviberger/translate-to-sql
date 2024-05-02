@@ -29,6 +29,27 @@ This command will download the necessary dependencies, compile the project, and 
 
 ## Usage
 follow these steps:
+
+### File-Based Translation
+for translating a file with queries -
+1. Write an input file with schema and queries, in the format -
+   ```text
+   Table1(col1, col2,...)
+   Table2(col1,...)
+   …
+
+   SELECT …
+   SELECT…
+   ```
+2. Start the application by running the main class (Main.java) and give the input file path as args, or run from the terminal-
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.arguments="input.txt"
+   ```
+   when “input.txt” is the file path.
+3. You can see the translated queries in the project directory in the “output.txt” file.
+
+### Web-Based Query Submission
+for sending queries from a local host -
 1. Start the application by running the main class (Main.java) or run from the terminal
 ```bash
 mvn spring-boot:run
