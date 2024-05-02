@@ -1,6 +1,6 @@
 package org.translateToSql;
 
-import org.translateToSql.model.DatabaseMetadata;
+import org.translateToSql.model.Schema;
 import org.translateToSql.core.TranslateFromTwoVL;
 import org.junit.jupiter.api.Test;
 import org.translateToSql.utils.ExpressionUtils;
@@ -34,8 +34,8 @@ class TwoVLTests {
         put("mainTable", new ArrayList<>(Arrays.asList("a", "b")));
 
     }};
-    DatabaseMetadata db = new DatabaseMetadata(tables);
-    TranslateFromTwoVL twoVL = new TranslateFromTwoVL(db);
+    Schema schema = new Schema(tables);
+    TranslateFromTwoVL twoVL = new TranslateFromTwoVL(schema);
 
 
     // test tr_t, basic query

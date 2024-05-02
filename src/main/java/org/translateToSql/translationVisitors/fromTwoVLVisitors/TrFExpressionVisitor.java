@@ -415,7 +415,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
      */
     private void getColumnNamesFromDB(PlainSelect select, Table fromItem, List<SelectItem<?>> selectItemsList) {
         Set<String> duplicateColumns = new HashSet<>();
-        Map<String, List<String>> tables = this.trTExpressionVisitor.getAlgorithmResources().getDb().getTables();
+        Map<String, List<String>> tables = this.trTExpressionVisitor.getAlgorithmResources().getSchema().getTables();
         List<String> tableColumns = tables.get(fromItem.getName());
 
         // adds to the list all the columns from the first table
@@ -462,7 +462,7 @@ public class TrFExpressionVisitor extends TwoVLExpressionVisitor {
     }
 
     /***
-     * Gets an comparison operator, with ANY or ALL, and flip the comparison expression if needed
+     * Gets a comparison operator, with ANY or ALL, and flip the comparison expression if needed
      * @param expression t ω ANY(...) / t ω ALL(...) / ANY(...) ω t ...
      * @return t ω ANY(...) / t ω ALL(...)
      */

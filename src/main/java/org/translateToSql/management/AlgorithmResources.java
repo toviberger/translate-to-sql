@@ -1,19 +1,19 @@
 package org.translateToSql.management;
 
-import org.translateToSql.model.DatabaseMetadata;
+import org.translateToSql.model.Schema;
 
 /***
- *  Bundles together resources essential for the translation algorithm, including VisitorManager and DatabaseMetaData.
+ *  Bundles together resources essential for the translation algorithm, including VisitorManager and Schema.
  *  This encapsulation facilitates easy access to shared resources across different visitors.
  */
 public class AlgorithmResources {
 
     private VisitorManager visitorManager;
-    private DatabaseMetadata db;
+    private Schema schema;
 
-    public AlgorithmResources(VisitorManager visitorManager, DatabaseMetadata db){
+    public AlgorithmResources(VisitorManager visitorManager, Schema schema){
         this.visitorManager = visitorManager;
-        this.db = db;
+        this.schema = schema;
     }
 
     public VisitorManager getVisitorManager() {
@@ -24,11 +24,11 @@ public class AlgorithmResources {
         this.visitorManager = visitorManager;
     }
 
-    public DatabaseMetadata getDb() {
-        return db;
+    public Schema getSchema() {
+        return schema;
     }
 
-    public void setDb(DatabaseMetadata db) {
-        this.db = db;
+    public void setSchema(Schema schema) {
+        this.schema = schema;
     }
 }

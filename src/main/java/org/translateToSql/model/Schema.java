@@ -5,15 +5,15 @@ import java.util.*;
 /***
  * A class for representing a Database metadata. It has a Map that contains a table name and its column names.
  */
-public class DatabaseMetadata {
+public class Schema {
 
     private Map<String, List<String>> tables;
 
-    public DatabaseMetadata(){
+    public Schema(){
         this.tables = new HashMap<>();
     }
 
-    public DatabaseMetadata(Map<String, List<String>> tables){
+    public Schema(Map<String, List<String>> tables){
         this.tables = tables;
     }
 
